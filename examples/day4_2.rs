@@ -77,15 +77,11 @@ impl Board {
     }
 
     fn is_win(&self) -> bool {
-        Board::any_rows_all(self.cells_set) || Board::any_rows_all(transpose(self.cells_set))
+        any_rows_all(self.cells_set) || any_rows_all(transpose(self.cells_set))
     }
 
     fn mark_won(&mut self, win_order: usize, winning_call: u8) {
         self.winning_call = Some((win_order, winning_call))
-    }
-
-    fn any_rows_all(array: [bool; 25]) -> bool {
-        array.chunks(5).any(|chunk| chunk.iter().all(|bit| *bit))
     }
 
     fn unmarked_numbers(&self) -> Vec<u8> {
@@ -109,6 +105,10 @@ impl Default for Board {
             winning_call: None,
         }
     }
+}
+
+fn any_rows_all(array: [bool; 25]) -> bool {
+    array.chunks(5).any(|chunk| chunk.iter().all(|bit| *bit))
 }
 
 fn transpose<T: Copy + Default>(a: [T; 25]) -> [T; 25] {
