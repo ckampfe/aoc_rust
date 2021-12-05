@@ -14,7 +14,7 @@ fn main() {
 
     for pair in pairs {
         match pair {
-            &[left, right] => {
+            [left, right] => {
                 if right > left {
                     increases += 1;
                 }

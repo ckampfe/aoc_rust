@@ -12,7 +12,7 @@ fn main() {
         let point_strings: Vec<_> = line.split(" -> ").collect();
         let mut points = vec![];
         for point_string in point_strings {
-            let xy_string: Vec<_> = point_string.split(",").collect();
+            let xy_string: Vec<_> = point_string.split(',').collect();
             let point = Point {
                 x: xy_string[0].parse().unwrap(),
                 y: xy_string[1].parse().unwrap(),

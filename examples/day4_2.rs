@@ -7,7 +7,7 @@ fn main() {
     let mut lines = lines.map(|line| line.unwrap());
 
     let calls = lines.next().unwrap();
-    let calls = calls.split(",").map(|s| s.parse::<u8>().unwrap());
+    let calls = calls.split(',').map(|s| s.parse::<u8>().unwrap());
 
     let board_lines: Vec<String> = lines.filter(|line| !line.is_empty()).collect();
 
@@ -62,7 +62,7 @@ fn main() {
     dbg!(unmarked_sum * winning_call as usize);
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 struct Board {
     cells_n: [u8; 25],
     cells_set: [bool; 25],
@@ -94,16 +94,6 @@ impl Board {
         }
 
         unmarked
-    }
-}
-
-impl Default for Board {
-    fn default() -> Self {
-        Self {
-            cells_n: Default::default(),
-            cells_set: [false; 25],
-            winning_call: None,
-        }
     }
 }
 

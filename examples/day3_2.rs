@@ -42,21 +42,17 @@ fn main() {
             .into_iter()
             .partition(|line_as_bits| line_as_bits[bit_i] == 0);
 
-        ox_bits = if zeros.len() == ones.len() {
+        ox_bits = if zeros.len() == ones.len() || zeros.len() < ones.len() {
             ones
         } else {
-            if zeros.len() < ones.len() {
-                ones
-            } else {
-                zeros
-            }
+            zeros
         };
 
         bit_i += 1;
     }
 
     let mut bit_i = 0;
-    let mut co2_bits = lines_as_bits.clone();
+    let mut co2_bits = lines_as_bits;
 
     loop {
         if co2_bits.len() == 1 {
@@ -67,14 +63,10 @@ fn main() {
             .into_iter()
             .partition(|line_as_bits| line_as_bits[bit_i] == 0);
 
-        co2_bits = if zeros.len() == ones.len() {
+        co2_bits = if zeros.len() == ones.len() || zeros.len() < ones.len() {
             zeros
         } else {
-            if zeros.len() < ones.len() {
-                zeros
-            } else {
-                ones
-            }
+            ones
         };
 
         bit_i += 1;
