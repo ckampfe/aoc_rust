@@ -47,23 +47,15 @@ struct AllFish {
 impl AllFish {
     fn tick(&mut self) {
         let zero = self.fish[0];
-        let one = self.fish[1];
-        let two = self.fish[2];
-        let three = self.fish[3];
-        let four = self.fish[4];
-        let five = self.fish[5];
-        let six = self.fish[6];
-        let seven = self.fish[7];
-        let eight = self.fish[8];
 
+        self.fish[0] = self.fish[1];
+        self.fish[1] = self.fish[2];
+        self.fish[2] = self.fish[3];
+        self.fish[3] = self.fish[4];
+        self.fish[4] = self.fish[5];
+        self.fish[5] = self.fish[6];
+        self.fish[6] = self.fish[7] + zero;
+        self.fish[7] = self.fish[8];
         self.fish[8] = zero;
-        self.fish[7] = eight;
-        self.fish[6] = seven + zero;
-        self.fish[5] = six;
-        self.fish[4] = five;
-        self.fish[3] = four;
-        self.fish[2] = three;
-        self.fish[1] = two;
-        self.fish[0] = one;
     }
 }
