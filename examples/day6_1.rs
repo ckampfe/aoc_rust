@@ -7,7 +7,7 @@ fn main() {
     let file_lines = lines.map(|line| line.unwrap());
     let mut all_fish: Vec<Fish> = file_lines
         .flat_map(|line| {
-            line.split(",")
+            line.split(',')
                 .map(|days_s| {
                     let days = days_s.parse::<u8>().unwrap();
                     Fish::new(days)
@@ -58,7 +58,7 @@ impl Fish {
         if self.days_remaining == 0 {
             self.days_remaining = 6;
             self.is_new = false;
-            return Some(Fish::default());
+            Some(Fish::default())
         } else {
             self.days_remaining -= 1;
             None
