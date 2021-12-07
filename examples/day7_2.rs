@@ -47,11 +47,7 @@ fn abs_difference<T: Sub<Output = T> + Ord>(x: T, y: T) -> T {
     }
 }
 
+// https://letstalkscience.ca/educational-resources/backgrounders/gauss-summation
 fn energy_overhead(e: usize) -> usize {
-    let mut adjusted = 0;
-    for (i, _value) in (0..e).enumerate() {
-        adjusted += i + 1
-    }
-
-    adjusted
+    e * (e + 1) / 2
 }
