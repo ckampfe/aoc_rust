@@ -21,6 +21,97 @@ use std::{collections::BTreeSet, fmt::Display, io::BufRead, ops::BitXor};
 // len6: (0|6|9)
 // len7: (8)
 
+#[derive(Clone, Debug)]
+struct Entry {
+    signal_patterns: [SignalPattern; 10],
+    output: [SignalPattern; 4],
+}
+
+#[derive(Clone, Debug)]
+enum SignalPattern {
+    Known {
+        digit: Digit,
+        segments: BTreeSet<Segment>,
+    },
+    Unknown {
+        segments: BTreeSet<Segment>,
+    },
+}
+
+impl SignalPattern {
+    fn segments(&self) -> &BTreeSet<Segment> {
+        match self {
+            SignalPattern::Known { segments, .. } => segments,
+            SignalPattern::Unknown { segments, .. } => segments,
+        }
+    }
+
+    fn deduce(&mut self, patterns: &[SignalPattern]) {
+        match self {
+            SignalPattern::Known { .. } => (),
+            SignalPattern::Unknown { segments, .. } => {
+                let one_four_seven_eight = patterns.iter().filter(|pattern| {
+                    matches!(
+                        pattern,
+                        SignalPattern::Known {
+                            digit: Digit::One,
+                            ..
+                        } | SignalPattern::Known {
+                            digit: Digit::Four,
+                            ..
+                        } | SignalPattern::Known {
+                            digit: Digit::Seven,
+                            ..
+                        } | SignalPattern::Known {
+                            digit: Digit::Eight,
+                            ..
+                        }
+                    )
+                });
+
+                let mut xors: [usize; 4] = one_four_seven_eight
+                    .map(|known_pattern| known_pattern.segments().bitxor(segments))
+                    .map(|bxor| bxor.len())
+                    .collect::<Vec<usize>>()
+                    .try_into()
+                    .unwrap();
+
+                xors.sort_unstable();
+
+                let out = match xors {
+                    [2, 2, 3, 3] => SignalPattern::Known {
+                        digit: Digit::Three,
+                        segments: segments.clone(),
+                    },
+                    [2, 4, 5, 5] => SignalPattern::Known {
+                        digit: Digit::Two,
+                        segments: segments.clone(),
+                    },
+                    [2, 3, 4, 5] => SignalPattern::Known {
+                        digit: Digit::Five,
+                        segments: segments.clone(),
+                    },
+                    [1, 3, 4, 4] => SignalPattern::Known {
+                        digit: Digit::Zero,
+                        segments: segments.clone(),
+                    },
+                    [1, 4, 5, 6] => SignalPattern::Known {
+                        digit: Digit::Six,
+                        segments: segments.clone(),
+                    },
+                    [1, 2, 3, 4] => SignalPattern::Known {
+                        digit: Digit::Nine,
+                        segments: segments.clone(),
+                    },
+                    _ => panic!("{:?} did not match 2, 3, or 5", xors),
+                };
+
+                *self = out;
+            }
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 enum Digit {
     Zero,
@@ -35,128 +126,6 @@ enum Digit {
     Nine,
 }
 
-#[derive(Clone, Debug)]
-enum Possible {
-    TwoThreeFive,
-    ZeroSixNine,
-}
-
-#[derive(Clone, Debug)]
-enum MaybeDigit {
-    Known {
-        digit: Digit,
-        segments: BTreeSet<Segment>,
-    },
-    Unknown {
-        possible: Possible,
-        segments: BTreeSet<Segment>,
-    },
-}
-
-impl MaybeDigit {
-    fn segments(&self) -> &BTreeSet<Segment> {
-        match self {
-            MaybeDigit::Known { segments, .. } => segments,
-            MaybeDigit::Unknown { segments, .. } => segments,
-        }
-    }
-
-    fn deduce(&self, others: &[MaybeDigit]) -> MaybeDigit {
-        match self {
-            MaybeDigit::Known { .. } => self.clone(),
-            MaybeDigit::Unknown { possible, segments } => match possible {
-                Possible::TwoThreeFive => {
-                    let one_four_seven_eight = others.iter().filter(|o| {
-                        matches!(
-                            o,
-                            MaybeDigit::Known {
-                                digit: Digit::One,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Four,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Seven,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Eight,
-                                ..
-                            }
-                        )
-                    });
-                    let c: Vec<_> = one_four_seven_eight.clone().collect();
-                    let mut xors: [usize; 4] = one_four_seven_eight
-                        .map(|s| s.segments().bitxor(segments))
-                        .map(|bxor| bxor.len())
-                        .collect::<Vec<usize>>()
-                        .try_into()
-                        .unwrap();
-                    xors.sort_unstable();
-
-                    match xors {
-                        [2, 2, 3, 3] => MaybeDigit::Known {
-                            digit: Digit::Three,
-                            segments: segments.clone(),
-                        },
-                        [2, 4, 5, 5] => MaybeDigit::Known {
-                            digit: Digit::Two,
-                            segments: segments.clone(),
-                        },
-                        [2, 3, 4, 5] => MaybeDigit::Known {
-                            digit: Digit::Five,
-                            segments: segments.clone(),
-                        },
-                        _ => panic!("{:?} did not match 2, 3, or 5, {:?}", xors, c),
-                    }
-                }
-                Possible::ZeroSixNine => {
-                    let one_four_seven_eight = others.iter().filter(|o| {
-                        matches!(
-                            o,
-                            MaybeDigit::Known {
-                                digit: Digit::One,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Four,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Seven,
-                                ..
-                            } | MaybeDigit::Known {
-                                digit: Digit::Eight,
-                                ..
-                            }
-                        )
-                    });
-                    let mut xors: [usize; 4] = one_four_seven_eight
-                        .map(|s| s.segments().bitxor(segments))
-                        .map(|bxor| bxor.len())
-                        .collect::<Vec<usize>>()
-                        .try_into()
-                        .unwrap();
-                    xors.sort_unstable();
-
-                    match xors {
-                        [1, 3, 4, 4] => MaybeDigit::Known {
-                            digit: Digit::Zero,
-                            segments: segments.clone(),
-                        },
-                        [1, 4, 5, 6] => MaybeDigit::Known {
-                            digit: Digit::Six,
-                            segments: segments.clone(),
-                        },
-                        [1, 2, 3, 4] => MaybeDigit::Known {
-                            digit: Digit::Nine,
-                            segments: segments.clone(),
-                        },
-                        _ => panic!("{:?} did not match 0, 6 or 9", xors),
-                    }
-                }
-            },
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Segment {
     A,
@@ -167,23 +136,6 @@ enum Segment {
     F,
     G,
 }
-
-#[derive(Clone, Debug)]
-struct Entry {
-    signal_patterns: [MaybeDigit; 10],
-    output: [MaybeDigit; 4],
-}
-
-///
-///    1:   
-///   ....  
-///  .    c 2
-///0 .    c
-///  6....  
-///  .    f
-///5 .    f 3
-///   ....  
-///     4
 
 fn main() {
     let input = std::fs::File::open("inputs/8.txt").unwrap();
@@ -196,17 +148,17 @@ fn main() {
     for line in file_lines.iter() {
         let splits: Vec<&str> = line.split(" | ").collect();
 
-        let signal_patterns: [MaybeDigit; 10] = splits[0]
+        let signal_patterns: [SignalPattern; 10] = splits[0]
             .split(' ')
-            .map(MaybeDigit::from)
+            .map(SignalPattern::from)
             .collect::<Vec<_>>()
             .try_into()
             .unwrap();
 
-        let output: [MaybeDigit; 4] = splits[1]
+        let output: [SignalPattern; 4] = splits[1]
             .split(' ')
-            .map(MaybeDigit::from)
-            .collect::<Vec<MaybeDigit>>()
+            .map(SignalPattern::from)
+            .collect::<Vec<SignalPattern>>()
             .try_into()
             .unwrap();
 
@@ -223,43 +175,80 @@ fn main() {
     for entry in entries.iter_mut() {
         // println!("before: {:?}", entry.to_string());
 
-        let ec = entry.clone();
-        for digit in entry.signal_patterns.iter_mut() {
-            let c = ec.signal_patterns.clone();
-            let new_digit = digit.deduce(&c);
-            *digit = new_digit;
+        let ec = entry.signal_patterns.clone();
+
+        for signal_pattern in entry.signal_patterns.iter_mut() {
+            signal_pattern.deduce(&ec);
         }
 
-        for output_digit in entry.output.iter_mut() {
-            *output_digit = entry
+        for output_pattern in entry.output.iter_mut() {
+            *output_pattern = entry
                 .signal_patterns
                 .iter()
                 .cloned()
-                .find(|sp| sp.segments() == output_digit.segments())
+                .find(|sp| sp.segments() == output_pattern.segments())
                 .unwrap();
         }
-        // println!("after: {:?}", entry.to_string());
-    }
 
-    for entry in entries {
         let mut digits_s = String::new();
+
         for output_digit in entry.output.iter() {
             match output_digit {
-                MaybeDigit::Known { digit, .. } => digits_s.push_str(&digit.to_string()),
+                SignalPattern::Known { digit, .. } => digits_s.push_str(&digit.to_string()),
                 _ => unreachable!(),
             }
         }
-        let n = usize::from_str_radix(&digits_s, 10).unwrap();
+
+        let n = digits_s.parse::<usize>().unwrap();
+
         output_total += n;
+
+        // println!("after: {:?}", entry.to_string());
     }
 
     dbg!(output_total);
 }
 
-impl Display for MaybeDigit {
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+// Everything after this is impls for parsing/displaying/debugging
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+impl Display for Entry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "[{}] | [{}]",
+            self.signal_patterns
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+            self.output
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .join(" "),
+        )
+    }
+}
+
+impl From<&str> for SignalPattern {
+    fn from(s: &str) -> Self {
+        let segments = s.chars().map(Segment::from).collect();
+
+        match Digit::try_from(s) {
+            Ok(digit) => SignalPattern::Known { digit, segments },
+            Err(_) => SignalPattern::Unknown { segments },
+        }
+    }
+}
+
+impl Display for SignalPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MaybeDigit::Known { digit, segments } => write!(
+            SignalPattern::Known { digit, segments } => write!(
                 f,
                 "{}({})",
                 digit.to_string(),
@@ -269,10 +258,9 @@ impl Display for MaybeDigit {
                     .collect::<Vec<_>>()
                     .join(""),
             ),
-            MaybeDigit::Unknown { possible, segments } => write!(
+            SignalPattern::Unknown { segments } => write!(
                 f,
-                "{}({})",
-                possible,
+                "({})",
                 segments
                     .iter()
                     .map(|segment| segment.to_string())
@@ -297,25 +285,6 @@ impl TryFrom<&str> for Digit {
     }
 }
 
-impl Display for Entry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}] | [{}]",
-            self.signal_patterns
-                .iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-            self.output
-                .iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()
-                .join(" "),
-        )
-    }
-}
-
 impl<'a> Display for Digit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let out = match self {
@@ -332,6 +301,23 @@ impl<'a> Display for Digit {
         };
 
         write!(f, "{}", out)
+    }
+}
+
+impl From<Digit> for usize {
+    fn from(digit: Digit) -> Self {
+        match digit {
+            Digit::Zero => 0,
+            Digit::One => 1,
+            Digit::Two => 2,
+            Digit::Three => 3,
+            Digit::Four => 4,
+            Digit::Five => 5,
+            Digit::Six => 6,
+            Digit::Seven => 7,
+            Digit::Eight => 8,
+            Digit::Nine => 9,
+        }
     }
 }
 
@@ -363,51 +349,5 @@ impl Display for Segment {
         };
 
         write!(f, "{}", out)
-    }
-}
-
-impl From<&str> for MaybeDigit {
-    fn from(s: &str) -> Self {
-        let segments = s.chars().map(Segment::from).collect();
-
-        match Digit::try_from(s) {
-            Ok(digit) => MaybeDigit::Known { digit, segments },
-            Err(_) => {
-                let possible = match s.len() {
-                    5 => Possible::TwoThreeFive,
-                    6 => Possible::ZeroSixNine,
-                    _ => panic!(),
-                };
-                MaybeDigit::Unknown { possible, segments }
-            }
-        }
-    }
-}
-
-impl Display for Possible {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let out = match self {
-            Possible::TwoThreeFive => "235",
-            Possible::ZeroSixNine => "069",
-        };
-
-        write!(f, "{}", out)
-    }
-}
-
-impl From<Digit> for usize {
-    fn from(digit: Digit) -> Self {
-        match digit {
-            Digit::Zero => 0,
-            Digit::One => 1,
-            Digit::Two => 2,
-            Digit::Three => 3,
-            Digit::Four => 4,
-            Digit::Five => 5,
-            Digit::Six => 6,
-            Digit::Seven => 7,
-            Digit::Eight => 8,
-            Digit::Nine => 9,
-        }
     }
 }
