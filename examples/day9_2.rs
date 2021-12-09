@@ -1,5 +1,4 @@
-use std::collections::VecDeque;
-use std::io::BufRead;
+use std::{collections::VecDeque, io::BufRead};
 
 const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
@@ -57,10 +56,10 @@ fn find_adjacents(i: usize, a: &mut [usize; 4]) {
             a[2] = xy_to_i(MAX_WIDTH - 1, some_y);
         }
         // bottom row
-        (other_x, MAX_HEIGHT) => {
-            a[0] = xy_to_i(other_x + 1, MAX_HEIGHT);
-            a[1] = xy_to_i(other_x - 1, MAX_HEIGHT);
-            a[2] = xy_to_i(other_x, MAX_HEIGHT - 1);
+        (some_x, MAX_HEIGHT) => {
+            a[0] = xy_to_i(some_x + 1, MAX_HEIGHT);
+            a[1] = xy_to_i(some_x - 1, MAX_HEIGHT);
+            a[2] = xy_to_i(some_x, MAX_HEIGHT - 1);
         }
         // left column
         (0, some_y) => {
