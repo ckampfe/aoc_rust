@@ -1,4 +1,5 @@
-use std::{collections::VecDeque, io::BufRead};
+use std::collections::VecDeque;
+use std::io::BufRead;
 
 const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
