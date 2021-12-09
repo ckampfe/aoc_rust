@@ -140,7 +140,7 @@ fn main() {
 
     let heightmap: HeightMap = HeightMap(heightmap_impl);
 
-    let mut basins_indexes: BTreeSet<usize> = BTreeSet::new();
+    let mut basins_indexes = [false; WIDTH * HEIGHT];
 
     let mut basin_lengths: BTreeSet<usize> = BTreeSet::new();
 
@@ -151,7 +151,7 @@ fn main() {
     let mut adjacents_buf = [usize::MAX; 4];
 
     for (i, value) in heightmap.0.iter().enumerate() {
-        if basins_indexes.contains(&i) {
+        if basins_indexes[i] {
             continue;
         }
 
@@ -172,8 +172,10 @@ fn main() {
                 &mut adjacents_buf,
             );
             basin_lengths.insert(basin_buf.len());
-            let basin_iter = basin_buf.iter();
-            basins_indexes.extend(basin_iter);
+
+            for basin_i in &basin_buf {
+                basins_indexes[*basin_i] = true;
+            }
         }
     }
 
