@@ -14,13 +14,13 @@ use std::{fmt::Display, io::BufRead};
 
 #[derive(Clone, Copy, Debug)]
 enum Digit<'a> {
-    Zero,
+    // Zero,
     One,
-    Two,
-    Three,
+    // Two,
+    // Three,
     Four,
-    Five,
-    Six,
+    // Five,
+    // Six,
     Seven,
     Eight,
     Unknown(&'a str),
@@ -29,13 +29,13 @@ enum Digit<'a> {
 impl<'a> Display for Digit<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let out = match self {
-            Digit::Zero => "0",
+            // Digit::Zero => "0",
             Digit::One => "1",
-            Digit::Two => "2",
-            Digit::Three => "3",
+            // Digit::Two => "2",
+            // Digit::Three => "3",
             Digit::Four => "4",
-            Digit::Five => "5",
-            Digit::Six => "6",
+            // Digit::Five => "5",
+            // Digit::Six => "6",
             Digit::Seven => "7",
             Digit::Eight => "8",
             Digit::Unknown(s) => s,
@@ -61,7 +61,7 @@ impl<'a> From<&'a str> for Digit<'a> {
 struct SignalPattern<'a>(&'a str);
 
 struct Entry<'a> {
-    signal_patterns: [SignalPattern<'a>; 10],
+    // signal_patterns: [SignalPattern<'a>; 10],
     output: [Digit<'a>; 4],
 }
 
@@ -75,12 +75,12 @@ fn main() {
 
     for line in file_lines.iter() {
         let split: Vec<&str> = line.split(" | ").collect();
-        let signal_patterns: [SignalPattern; 10] = split[0]
-            .split(' ')
-            .map(SignalPattern)
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
+        // let signal_patterns: [SignalPattern; 10] = split[0]
+        //     .split(' ')
+        //     .map(SignalPattern)
+        //     .collect::<Vec<_>>()
+        //     .try_into()
+        //     .unwrap();
 
         let output: [Digit; 4] = split[1]
             .split(' ')
@@ -90,7 +90,7 @@ fn main() {
             .unwrap();
 
         let entry = Entry {
-            signal_patterns,
+            // signal_patterns,
             output,
         };
 
