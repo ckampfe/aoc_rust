@@ -7,13 +7,7 @@ const MAX_WIDTH: usize = WIDTH - 1;
 const MAX_HEIGHT: usize = HEIGHT - 1;
 const MAX_INDEX: usize = WIDTH * HEIGHT - 1;
 
-struct HeightMap(Vec<u8>);
-
-impl HeightMap {
-    fn push(&mut self, location: u8) {
-        self.0.push(location);
-    }
-}
+struct HeightMap([u8; WIDTH * HEIGHT]);
 
 fn find_adjacents(i: usize, a: &mut [usize; 4]) {
     *a = [usize::MAX; 4];
@@ -134,16 +128,17 @@ fn main() {
 
     let file_lines = lines.map(|line| line.unwrap());
 
-    let mut heightmap: HeightMap = HeightMap(Vec::with_capacity(WIDTH * HEIGHT));
+    let mut heightmap_impl = [u8::default(); WIDTH * HEIGHT];
 
-    for line in file_lines {
-        for value_at_location in line.split("").filter(|s| !s.is_empty()) {
+    for (y, line) in file_lines.enumerate() {
+        for (x, value_at_location) in line.split("").filter(|s| !s.is_empty()).enumerate() {
             let value_at_location = value_at_location.parse::<u8>().unwrap();
-            heightmap.push(value_at_location);
+            // heightmap.push(value_at_location);
+            heightmap_impl[xy_to_i(x, y)] = value_at_location;
         }
     }
 
-    assert!(heightmap.0.len() == WIDTH * HEIGHT);
+    let heightmap: HeightMap = HeightMap(heightmap_impl);
 
     let mut basins_indexes: BTreeSet<usize> = BTreeSet::new();
 
