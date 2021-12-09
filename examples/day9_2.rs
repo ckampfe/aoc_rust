@@ -1,4 +1,5 @@
-use std::{collections::VecDeque, io::BufRead};
+use std::collections::{BTreeSet, VecDeque};
+use std::io::BufRead;
 
 const WIDTH: usize = 100;
 const HEIGHT: usize = 100;
@@ -73,7 +74,7 @@ fn find_adjacents(i: usize, a: &mut [usize; 4]) {
             a[1] = xy_to_i(some_x - 1, 0);
             a[2] = xy_to_i(some_x, 1);
         }
-        _ => panic!("unhandled index case"),
+        _ => unreachable!("unhandled index case"),
     };
 }
 
@@ -99,24 +100,32 @@ fn is_lowpoint(value: u8, adjacent_values: &[u8]) -> bool {
         .all(|adjacent_value| value < *adjacent_value)
 }
 
-fn find_basin_indexes(i: usize, heightmap: &HeightMap, adjacents: &mut [usize; 4]) -> Vec<usize> {
-    let mut basin = vec![];
-    let mut queue = VecDeque::new();
+fn find_basin_indexes(
+    i: usize,
+    heightmap: &HeightMap,
+    queue: &mut VecDeque<usize>,
+    basin_buf: &mut Vec<usize>,
+    adjacents: &mut [usize; 4],
+) {
+    queue.clear();
+
+    basin_buf.clear();
+
     queue.push_back(i);
-    basin.push(i);
+
+    basin_buf.push(i);
 
     while let Some(this_i) = queue.pop_front() {
         find_adjacents(this_i, adjacents);
 
         for adjacent in adjacents.iter() {
-            if *adjacent <= MAX_INDEX && !basin.contains(adjacent) && heightmap.0[*adjacent] < 9 {
-                basin.push(*adjacent);
+            if *adjacent <= MAX_INDEX && !basin_buf.contains(adjacent) && heightmap.0[*adjacent] < 9
+            {
+                basin_buf.push(*adjacent);
                 queue.push_back(*adjacent);
             }
         }
     }
-
-    basin
 }
 
 fn main() {
@@ -136,29 +145,45 @@ fn main() {
 
     assert!(heightmap.0.len() == WIDTH * HEIGHT);
 
-    let mut basin_lens = vec![];
+    let mut basins_indexes: BTreeSet<usize> = BTreeSet::new();
 
-    let mut adjacents = [usize::MAX; 4];
+    let mut basin_lengths: BTreeSet<usize> = BTreeSet::new();
+
+    let mut queue: VecDeque<usize> = VecDeque::new();
+
+    let mut basin_buf: Vec<usize> = Vec::new();
+
+    let mut adjacents_buf = [usize::MAX; 4];
 
     for (i, value) in heightmap.0.iter().enumerate() {
-        find_adjacents(i, &mut adjacents);
+        if basins_indexes.contains(&i) {
+            continue;
+        }
 
-        let adjacent_values: Vec<u8> = adjacents
+        find_adjacents(i, &mut adjacents_buf);
+
+        let adjacent_values: Vec<u8> = adjacents_buf
             .into_iter()
             .filter(|adjacent_i| *adjacent_i <= MAX_INDEX)
             .map(|adjacent_i| heightmap.0[adjacent_i])
             .collect();
 
         if is_lowpoint(*value, &adjacent_values) {
-            let basin_values = find_basin_indexes(i, &heightmap, &mut adjacents);
-            let basin_len = basin_values.len();
-            basin_lens.push(basin_len);
+            find_basin_indexes(
+                i,
+                &heightmap,
+                &mut queue,
+                &mut basin_buf,
+                &mut adjacents_buf,
+            );
+            basin_lengths.insert(basin_buf.len());
+            let basin_iter = basin_buf.iter();
+            basins_indexes.extend(basin_iter);
         }
     }
 
-    basin_lens.sort_unstable();
-    basin_lens.reverse();
-
-    dbg!(&basin_lens[..3]);
-    dbg!(basin_lens[0] * basin_lens[1] * basin_lens[2]);
+    dbg!(basin_lengths.len());
+    let top_3 = &basin_lengths.iter().rev().take(3).collect::<Vec<_>>();
+    dbg!(top_3);
+    dbg!(top_3[0] * top_3[1] * top_3[2]);
 }
