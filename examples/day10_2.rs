@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Token {
     OpenParen,
     CloseParen,
@@ -10,6 +10,18 @@ enum Token {
     CloseCurly,
     OpenAngle,
     CloseAngle,
+}
+
+impl Token {
+    fn close(&self) -> Token {
+        match self {
+            Token::OpenParen => Token::CloseParen,
+            Token::OpenSquare => Token::CloseSquare,
+            Token::OpenCurly => Token::CloseCurly,
+            Token::OpenAngle => Token::CloseAngle,
+            _ => panic!("Token {:?} is not closable", self),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -67,61 +79,16 @@ fn parse(tokens: &[Token]) -> LineStatus {
 
     for token in tokens {
         match token {
-            Token::OpenParen => {
-                expected.push(Token::CloseParen);
+            Token::OpenParen | Token::OpenSquare | Token::OpenCurly | Token::OpenAngle => {
+                expected.push(token.close());
                 counter += 1;
             }
-            Token::CloseParen => {
-                if let Some(t) = expected.pop() {
-                    if !matches!(t, Token::CloseParen) {
+            Token::CloseParen | Token::CloseSquare | Token::CloseCurly | Token::CloseAngle => {
+                if let Some(expected_token) = expected.pop() {
+                    if expected_token != *token {
                         return LineStatus::Corrupt {
-                            expected: t,
-                            illegal: Token::CloseParen,
-                        };
-                    }
-                }
-                counter -= 1;
-            }
-            Token::OpenSquare => {
-                expected.push(Token::CloseSquare);
-                counter += 1;
-            }
-            Token::CloseSquare => {
-                if let Some(t) = expected.pop() {
-                    if !matches!(t, Token::CloseSquare) {
-                        return LineStatus::Corrupt {
-                            expected: t,
-                            illegal: Token::CloseSquare,
-                        };
-                    }
-                }
-                counter -= 1;
-            }
-            Token::OpenCurly => {
-                expected.push(Token::CloseCurly);
-                counter += 1;
-            }
-            Token::CloseCurly => {
-                if let Some(t) = expected.pop() {
-                    if !matches!(t, Token::CloseCurly) {
-                        return LineStatus::Corrupt {
-                            expected: t,
-                            illegal: Token::CloseCurly,
-                        };
-                    }
-                }
-                counter -= 1;
-            }
-            Token::OpenAngle => {
-                expected.push(Token::CloseAngle);
-                counter += 1;
-            }
-            Token::CloseAngle => {
-                if let Some(t) = expected.pop() {
-                    if !matches!(t, Token::CloseAngle) {
-                        return LineStatus::Corrupt {
-                            expected: t,
-                            illegal: Token::CloseAngle,
+                            expected: expected_token,
+                            illegal: *token,
                         };
                     }
                 }
