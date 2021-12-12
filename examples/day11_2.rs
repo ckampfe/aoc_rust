@@ -97,85 +97,47 @@ fn find_adjacents(i: usize) -> Vec<usize> {
             if some_x > 0 && some_x < MAX_WIDTH && some_y > 0 && some_y < MAX_HEIGHT =>
         {
             vec![
-                // horizontal and vertical
-                xy_to_i(some_x + 1, y),
-                xy_to_i(some_x - 1, y),
-                xy_to_i(some_x, y + 1),
-                xy_to_i(some_x, y - 1),
-                // diagonals
-                xy_to_i(some_x + 1, y + 1),
-                xy_to_i(some_x + 1, y - 1),
-                xy_to_i(some_x - 1, y + 1),
-                xy_to_i(some_x - 1, y - 1),
+                up(i),
+                down(i),
+                left(i),
+                right(i),
+                up(left(i)),
+                up(right(i)),
+                down(left(i)),
+                down(right(i)),
             ]
         }
         // upper left
         (0, 0) => {
-            vec![xy_to_i(1, 0), xy_to_i(0, 1), xy_to_i(1, 1)]
+            vec![right(i), down(i), down(right(i))]
         }
         // lower left
         (0, MAX_HEIGHT) => {
-            vec![
-                xy_to_i(1, MAX_HEIGHT),
-                xy_to_i(0, MAX_HEIGHT - 1),
-                xy_to_i(1, MAX_HEIGHT - 1),
-            ]
+            vec![up(i), right(i), up(right(i))]
         }
         // upper right
         (MAX_WIDTH, 0) => {
-            vec![
-                xy_to_i(MAX_WIDTH - 1, 0),
-                xy_to_i(MAX_WIDTH, 1),
-                xy_to_i(MAX_WIDTH - 1, 1),
-            ]
+            vec![left(i), down(i), down(left(i))]
         }
         // lower right
         (MAX_WIDTH, MAX_HEIGHT) => {
-            vec![
-                xy_to_i(MAX_WIDTH - 1, MAX_HEIGHT),
-                xy_to_i(MAX_WIDTH, MAX_HEIGHT - 1),
-                xy_to_i(MAX_WIDTH - 1, MAX_HEIGHT - 1),
-            ]
+            vec![left(i), up(i), up(left(i))]
         }
         // right column
-        (MAX_WIDTH, some_y) => {
-            vec![
-                xy_to_i(MAX_WIDTH, some_y + 1),
-                xy_to_i(MAX_WIDTH, some_y - 1),
-                xy_to_i(MAX_WIDTH - 1, some_y),
-                xy_to_i(MAX_WIDTH - 1, some_y + 1),
-                xy_to_i(MAX_WIDTH - 1, some_y - 1),
-            ]
+        (MAX_WIDTH, _some_y) => {
+            vec![up(i), left(i), down(i), up(left(i)), down(left(i))]
         }
         // bottom row
-        (some_x, MAX_HEIGHT) => {
-            vec![
-                xy_to_i(some_x + 1, MAX_HEIGHT),
-                xy_to_i(some_x - 1, MAX_HEIGHT),
-                xy_to_i(some_x, MAX_HEIGHT - 1),
-                xy_to_i(some_x + 1, MAX_HEIGHT - 1),
-                xy_to_i(some_x - 1, MAX_HEIGHT - 1),
-            ]
+        (_some_x, MAX_HEIGHT) => {
+            vec![left(i), up(i), right(i), up(left(i)), up(right(i))]
         }
         // left column
-        (0, some_y) => {
-            vec![
-                xy_to_i(1, some_y),
-                xy_to_i(0, some_y - 1),
-                xy_to_i(0, some_y + 1),
-                xy_to_i(1, some_y - 1),
-                xy_to_i(1, some_y + 1),
-            ]
+        (0, _some_y) => {
+            vec![up(i), right(i), down(i), up(right(i)), down(right(i))]
         }
         // top row
-        (some_x, 0) => {
-            vec![
-                xy_to_i(some_x + 1, 0),
-                xy_to_i(some_x - 1, 0),
-                xy_to_i(some_x, 1),
-                xy_to_i(some_x + 1, 1),
-                xy_to_i(some_x - 1, 1),
-            ]
+        (_some_x, 0) => {
+            vec![left(i), down(i), right(i), down(left(i)), down(right(i))]
         }
         _ => unreachable!("unhandled index case"),
     }
@@ -195,6 +157,26 @@ const fn y(i: usize) -> usize {
 
 const fn xy_to_i(x: usize, y: usize) -> usize {
     x + (WIDTH * y)
+}
+
+const fn up(i: usize) -> usize {
+    let (x, y) = i_to_xy(i);
+    xy_to_i(x, y - 1)
+}
+
+const fn down(i: usize) -> usize {
+    let (x, y) = i_to_xy(i);
+    xy_to_i(x, y + 1)
+}
+
+const fn left(i: usize) -> usize {
+    let (x, y) = i_to_xy(i);
+    xy_to_i(x - 1, y)
+}
+
+const fn right(i: usize) -> usize {
+    let (x, y) = i_to_xy(i);
+    xy_to_i(x + 1, y)
 }
 
 fn main() {
