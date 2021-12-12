@@ -151,27 +151,27 @@ impl Path {
     fn plus_one(&mut self, s: &Cave) {
         match s {
             Cave::By => match self.count(s) {
-                0 => self.counts = self.counts | BY_1,
+                0 => self.counts |= BY_1,
                 1 => self.counts = (self.counts & !BY_1) | BY_2,
                 _ => panic!(),
             },
             Cave::Zs => match self.count(s) {
-                0 => self.counts = self.counts | ZS_1,
+                0 => self.counts |= ZS_1,
                 1 => self.counts = (self.counts & !ZS_1) | ZS_2,
                 _ => panic!(),
             },
             Cave::Zt => match self.count(s) {
-                0 => self.counts = self.counts | ZT_1,
+                0 => self.counts |= ZT_1,
                 1 => self.counts = (self.counts & !ZT_1) | ZT_2,
                 _ => panic!(),
             },
             Cave::Gv => match self.count(s) {
-                0 => self.counts = self.counts | GV_1,
+                0 => self.counts |= GV_1,
                 1 => self.counts = (self.counts & !GV_1) | GV_2,
                 _ => panic!(),
             },
             Cave::Iu => match self.count(s) {
-                0 => self.counts = self.counts | IU_1,
+                0 => self.counts |= IU_1,
                 1 => self.counts = (self.counts & !IU_1) | IU_2,
                 _ => panic!(),
             },
@@ -221,7 +221,7 @@ impl CaveNetwork {
                     Cave::By | Cave::Zs | Cave::Zt | Cave::Gv | Cave::Iu => {
                         let others_have_two = current_path.any_two_but(out_node);
 
-                        let this_visit_count = current_path.count(&out_node);
+                        let this_visit_count = current_path.count(out_node);
 
                         if this_visit_count == 2 || (others_have_two && this_visit_count == 1) {
                             continue;
