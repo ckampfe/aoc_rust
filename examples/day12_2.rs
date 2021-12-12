@@ -24,76 +24,110 @@ enum Cave<'a> {
     Small { name: &'a str },
 }
 
-struct Graph<'a> {
-    graph: HashMap<Cave<'a>, Vec<Cave<'a>>>,
+#[derive(Clone, Debug)]
+struct Path<'a> {
+    last_node: &'a Cave<'a>,
+    by: u8,
+    zs: u8,
+    zt: u8,
+    gv: u8,
+    iu: u8,
 }
 
-impl<'a> Graph<'a> {
+impl<'a> Path<'a> {
+    fn count(&self, s: &str) -> u8 {
+        match s {
+            "by" => self.by,
+            "zs" => self.zs,
+            "zt" => self.zt,
+            "gv" => self.gv,
+            "iu" => self.iu,
+            other => unreachable!("{}", other),
+        }
+    }
+
+    fn any_two_but(&self, s: &str) -> bool {
+        match s {
+            "by" => self.zs == 2 || self.zt == 2 || self.gv == 2 || self.iu == 2,
+            "zs" => self.by == 2 || self.zt == 2 || self.gv == 2 || self.iu == 2,
+            "zt" => self.by == 2 || self.zs == 2 || self.gv == 2 || self.iu == 2,
+            "gv" => self.by == 2 || self.zs == 2 || self.zt == 2 || self.iu == 2,
+            "iu" => self.by == 2 || self.zs == 2 || self.zt == 2 || self.gv == 2,
+            other => unreachable!("{}", other),
+        }
+    }
+
+    fn plus_one(&mut self, s: &str) {
+        match s {
+            "by" => self.by += 1,
+            "zs" => self.zs += 1,
+            "zt" => self.zt += 1,
+            "gv" => self.gv += 1,
+            "iu" => self.iu += 1,
+            other => unreachable!("{}", other),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct CaveNetwork<'a> {
+    adjacencies: HashMap<Cave<'a>, Vec<Cave<'a>>>,
+}
+
+const START_NODE: Cave = Cave::Small { name: "start" };
+const END_NODE: Cave = Cave::Small { name: "end" };
+
+impl<'a> CaveNetwork<'a> {
     fn paths(&self) -> Vec<Path> {
         let mut paths = vec![];
-
-        let start_node = Cave::Small { name: "start" };
-        let end_node = Cave::Small { name: "end" };
 
         let mut traversal_stack = vec![];
 
         let start_path = Path {
-            nodes: vec![start_node],
-            small_caves_visited: HashMap::new(),
+            last_node: &START_NODE,
+            // small_caves_visited: HashMap::new(),
+            by: 0,
+            zs: 0,
+            zt: 0,
+            gv: 0,
+            iu: 0,
         };
 
         traversal_stack.push(start_path);
 
         while let Some(current_path) = traversal_stack.pop() {
-            if current_path.nodes.contains(&end_node) {
+            if current_path.last_node == &END_NODE {
                 paths.push(current_path);
                 continue;
             }
 
-            let current_node = current_path.nodes.last().unwrap();
-
-            let out_nodes = self.graph.get(current_node).unwrap();
+            let out_nodes = self.adjacencies.get(current_path.last_node).unwrap();
 
             for out_node in out_nodes {
                 match out_node {
                     Cave::Small { name: "start" } => continue,
                     Cave::Small { name: "end" } => {
                         let mut clonepath = current_path.clone();
-                        clonepath.nodes.push(*out_node);
+                        clonepath.last_node = out_node;
                         traversal_stack.push(clonepath);
                     }
-                    Cave::Small { .. } => {
-                        let others_have_two = current_path
-                            .small_caves_visited
-                            .iter()
-                            .filter(|(k, _count)| k != &out_node)
-                            .any(|(_k, count)| *count >= 2);
+                    Cave::Small { name } => {
+                        let others_have_two = current_path.any_two_but(name);
 
-                        let this_has_one = current_path
-                            .small_caves_visited
-                            .get(out_node)
-                            .and_then(|count| Some(*count == 1))
-                            .unwrap_or(false);
+                        let this_visit_count = current_path.count(name);
 
-                        let this_has_two = current_path
-                            .small_caves_visited
-                            .get(out_node)
-                            .and_then(|count| Some(*count == 2))
-                            .unwrap_or(false);
-
-                        if this_has_two || (others_have_two && this_has_one) {
+                        if this_visit_count == 2 || (others_have_two && this_visit_count == 1) {
                             continue;
                         } else {
                             let mut clonepath = current_path.clone();
-                            let e = clonepath.small_caves_visited.entry(*out_node).or_insert(0);
-                            *e += 1;
-                            clonepath.nodes.push(*out_node);
+                            clonepath.plus_one(name);
+                            clonepath.last_node = out_node;
                             traversal_stack.push(clonepath);
                         }
                     }
                     Cave::Large { .. } => {
                         let mut clonepath = current_path.clone();
-                        clonepath.nodes.push(*out_node);
+                        clonepath.last_node = out_node;
                         traversal_stack.push(clonepath);
                     }
                 }
@@ -110,29 +144,32 @@ fn main() {
 
     let file_lines: Vec<_> = lines.map(|line| line.unwrap()).collect();
 
-    let mut graph = Graph {
-        graph: HashMap::new(),
+    let mut cave_network = CaveNetwork {
+        adjacencies: HashMap::new(),
     };
 
     for line in &file_lines {
         let edge = lex(line);
 
-        let e0 = graph.graph.entry(edge[0]).or_insert_with(Vec::new);
+        let e0 = cave_network
+            .adjacencies
+            .entry(edge[0])
+            .or_insert_with(Vec::new);
         e0.push(edge[1]);
 
-        let e1 = graph.graph.entry(edge[1]).or_insert_with(Vec::new);
+        let e1 = cave_network
+            .adjacencies
+            .entry(edge[1])
+            .or_insert_with(Vec::new);
         e1.push(edge[0]);
     }
 
-    let paths = graph.paths();
+    // dbg!(&cave_network);
+    // panic!();
+
+    let paths = cave_network.paths();
 
     dbg!(paths.len());
-}
-
-#[derive(Clone, Debug)]
-struct Path<'a> {
-    nodes: Vec<Cave<'a>>,
-    small_caves_visited: HashMap<Cave<'a>, u8>,
 }
 
 #[cfg(test)]
@@ -141,29 +178,23 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let input = "start-A
-start-b
-A-c
-A-b
-b-d
-A-end
-b-end";
+        let input = include_str!("../inputs/12.txt");
 
-        let mut graph = Graph {
-            graph: HashMap::new(),
+        let mut graph = CaveNetwork {
+            adjacencies: HashMap::new(),
         };
 
         for line in input.lines() {
             let edge = lex(line);
 
-            let e0 = graph.graph.entry(edge[0]).or_insert_with(Vec::new);
+            let e0 = graph.adjacencies.entry(edge[0]).or_insert_with(Vec::new);
             e0.push(edge[1]);
 
-            let e1 = graph.graph.entry(edge[1]).or_insert_with(Vec::new);
+            let e1 = graph.adjacencies.entry(edge[1]).or_insert_with(Vec::new);
             e1.push(edge[0]);
         }
 
         let paths = graph.paths();
-        assert_eq!(paths.len(), 36)
+        assert_eq!(paths.len(), 120506)
     }
 }
