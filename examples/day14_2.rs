@@ -75,9 +75,7 @@ fn main() {
     // skip the blank line
     file_lines.next();
 
-    let rules = file_lines.take_while(|line| !line.is_empty());
-
-    let rules = rules.fold(Rules::new(), |mut acc, line| {
+    let rules = file_lines.fold(Rules::new(), |mut acc, line| {
         let split: Vec<_> = line.split(" -> ").collect();
 
         let matcher = split[0].to_owned();
