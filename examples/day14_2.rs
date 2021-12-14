@@ -1,7 +1,9 @@
 use std::{collections::HashMap, io::BufRead};
 
 type PairCounts = HashMap<String, usize>;
-type Rules = HashMap<String, String>;
+type Rules = HashMap<Matcher, Replacement>;
+type Matcher = String;
+type Replacement = String;
 
 /// turn AABC into {A: 2, B: 1, C: 1, AA: 1, AB: 1, BC: 1}
 fn to_pair_counts(s: &str) -> PairCounts {
