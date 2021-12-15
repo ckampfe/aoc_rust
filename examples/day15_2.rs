@@ -1,4 +1,6 @@
-use std::{collections::HashSet, io::BufRead};
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::io::BufRead;
 
 const WIDTH: usize = 500;
 const HEIGHT: usize = 500;
@@ -146,6 +148,12 @@ fn find_adjacents<const WIDTH: usize, const MAX_WIDTH: usize, const MAX_HEIGHT: 
 // 21
 // 22      return dist[], prev[]
 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct IndexWithCost {
+    cost: usize,
+    i: usize,
+}
+
 fn dijkstra<
     const SIZE: usize,
     const WIDTH: usize,
@@ -156,37 +164,33 @@ fn dijkstra<
     source: usize,
     target: usize,
 ) -> Vec<usize> {
-    let mut q = HashSet::new();
+    let mut q = BinaryHeap::new();
     let mut dist = [usize::MAX; SIZE];
     let mut prev = [usize::MAX; SIZE];
 
-    for (i, _r) in graph.iter().enumerate() {
-        q.insert(i);
-    }
+    let index_with_cost = Reverse(IndexWithCost {
+        cost: dist[source],
+        i: source,
+    });
+    q.push(index_with_cost);
 
     dist[source] = 0;
 
-    while !q.is_empty() {
-        let mut qmin = usize::MAX;
-        let mut u: usize = 0;
-
-        for i in q.iter() {
-            if dist[*i] < qmin {
-                qmin = dist[*i];
-                u = *i;
-            }
-        }
-
-        q.remove(&u);
+    while let Some(u) = q.pop() {
+        let Reverse(IndexWithCost { i: u, .. }) = u;
 
         let neighbors = find_adjacents::<WIDTH, MAX_WIDTH, MAX_HEIGHT>(u);
-        let neighbors = neighbors.iter().filter(|neighbor| q.contains(neighbor));
 
         for neighbor in neighbors {
-            let alt = dist[u] + graph[*neighbor] as usize;
-            if alt < dist[*neighbor] {
-                dist[*neighbor] = alt;
-                prev[*neighbor] = u;
+            let alt = dist[u] + graph[neighbor] as usize;
+            if alt < dist[neighbor] {
+                dist[neighbor] = alt;
+                prev[neighbor] = u;
+                let neighbor_with_cost = Reverse(IndexWithCost {
+                    cost: dist[neighbor],
+                    i: neighbor,
+                });
+                q.push(neighbor_with_cost);
             }
         }
     }
