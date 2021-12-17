@@ -80,7 +80,7 @@ fn main() {
     let mut min = usize::MAX;
     let mut max = usize::MIN;
 
-    for (k, v) in counter {
+    for (_k, v) in counter {
         if v > max {
             max = v;
         }
