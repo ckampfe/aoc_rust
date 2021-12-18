@@ -19,7 +19,6 @@ impl FlatNumbers {
 
     fn magnitude(&mut self) -> usize {
         while self.magnitude_once() {}
-        dbg!(&self);
         self.values[0]
     }
 
@@ -44,8 +43,6 @@ impl FlatNumbers {
             assert!(window.len() == 2);
             window[0] == window[1]
         }) {
-            dbg!(&self);
-
             let left = self.values[i] * 3;
             let right = self.values[i + 1] * 2;
             self.depths.remove(i + 1);
